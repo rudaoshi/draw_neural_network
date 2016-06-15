@@ -6,7 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 plt.rcdefaults()
 from matplotlib.lines import Line2D
-from matplotlib.patches import Rectangle
+from matplotlib.patches import Rectangle, ConnectionPatch
 from matplotlib.collections import PatchCollection
 
 
@@ -24,6 +24,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+import matplotlib
 
 sns.set(style="white")
 
@@ -67,6 +68,7 @@ def add_tensor_3d(gs, layer_num, length = 10, feature_num = 5, shift = (0.1, 0.1
     for i in range(layer_num):
 
         cur_ax = plt.gcf().add_axes(pos)
+
         axes.append(cur_ax)
         if notification_box:
             cur_boxes = notification_box[i]
@@ -86,23 +88,35 @@ def add_tensor_3d(gs, layer_num, length = 10, feature_num = 5, shift = (0.1, 0.1
     return axes
 
 
-def add_connection(ax, source_ax, source_data_coord,  target_ax, target_data_coord):
-    inv = ax.transAxes.inverted()
+def add_connection(source_ax, source_data_coord,  target_ax, target_data_coord):
+    con = ConnectionPatch(xyA=source_data_coord, xyB=target_data_coord,
+                          coordsA='data', coordsB='data',
+                          axesA=source_ax, axesB=target_ax,
+                          arrowstyle='->', clip_on=False, linewidth=3)
+    con.set_zorder(10)
 
-    source_disp_coord = source_ax.transData.transform(source_data_coord)
-    print source_disp_coord
-    source_ax_coord = inv.transform(source_disp_coord)
-    print source_ax_coord
+    source_ax.add_artist(con)
 
-    target_disp_coord = target_ax.transData.transform(target_data_coord)
-    print target_disp_coord
-    target_ax_coord = inv.transform(target_disp_coord)
-    print target_ax_coord
+    # inv = plt.gcf().transFigure.inverted()
+    #
+    # source_disp_coord = source_ax.transData.transform(source_data_coord)
+    # print source_disp_coord
+    # source_fig_coord = inv.transform(source_disp_coord)
+    # print source_fig_coord
+    #
+    # target_disp_coord = target_ax.transData.transform(target_data_coord)
+    # print target_disp_coord
+    # target_fig_coord = inv.transform(target_disp_coord)
+    # print target_fig_coord
+    #
+    # line = matplotlib.lines.Line2D((source_fig_coord[0], target_fig_coord[0]), (source_fig_coord[1], target_fig_coord[1]),
+    #                                transform=plt.gcf().transFigure)
+    #
+    # plt.gcf().lines = line,
+#    plt.gcf().line(source_fig_coord[0], source_fig_coord[1],
+#                    target_fig_coord[0], target_fig_coord[1], head_width=0.05, head_length=0.1, fc='k', ec='k')
 
-    ax.arrow(source_ax_coord[0], source_ax_coord[1],
-             target_ax_coord[0], target_ax_coord[1], head_width=0.05, head_length=0.1, fc='k', ec='k')
-
-    ax.arrow(0, 0, 0.5, 0.5, head_width=0.05, head_length=0.1, fc='k', ec='k')
+#    plt.gcf().line(0, 0, 0.5, 0.5, head_width=0.05, head_length=0.1, fc='k', ec='k')
 
 def add_mapping(patches, colors, start_ratio, patch_size, ind_bgn,
                 top_left_list, loc_diff_list, num_show_list, size_list):
@@ -246,29 +260,36 @@ if __name__ == "__main__":
                   {"box": [7.5,0, 3, embedding_dim], "color":"red", "alpha" : 0.6},
                   {"box": [16.5, 0, 3, embedding_dim], "color": "green", "alpha": 0.6}]
     add_tensor_2d(embedding_ax, length=text_length, feature_num=embedding_dim, x_label="words", y_label= "embedding", notification_box=note_boxes)
-    plt.hold(True)
+
 
 #    conv_ax = plt.subplot(gs[1:3, :])
 
     shift = [0.1,0.025]
 
-    note_boxes = [[{"box": [1, 0, 1, conv_dim], "color": "blue", "alpha": 0.6}],
-                  [{"box": [4, 0, 1, conv_dim], "color": "red", "alpha": 0.6}],
-                  [{"box": [16, 0, 1, conv_dim], "color": "green", "alpha": 0.6}]]
+    note_boxes = [[{"box": [1, 0, 1, conv_dim], "color": "blue", "alpha": 0.6}, {"box": [0, 8, text_length, 1], "color": "cyan", "alpha": 0.6}, ],
+                  [{"box": [4, 0, 1, conv_dim], "color": "red", "alpha": 0.6}, {"box": [0, 5, text_length, 1], "color": "magenta", "alpha": 0.6},],
+                  [{"box": [16, 0, 1, conv_dim], "color": "green", "alpha": 0.6}, {"box": [0, 2, text_length, 1], "color": "orange", "alpha": 0.6},]]
     conv_axes = add_tensor_3d(gs[1:3, :], 3, length=text_length, feature_num=conv_dim, shift = shift, notification_box=note_boxes)
 
-    plt.hold(True)
-
-    connection_ax = plt.gcf().add_axes([0,0,1,1])
-    connection_ax.arrow(0, 0, 0.5, 0.5, head_width=0.05, head_length=0.1, fc='k', ec='k', zorder=1)
-    #add_connection(connection_ax, embedding_ax, (3, 0), conv_axes[0] , (1.5,0))
 
 
-#    max_pool_ax = plt.subplot(gs[0, :])
-#    max_pool_layer_pos = [0,0, 1,1 ]
-#    add_tensor_2d(max_pool_ax, length=text_length*2, feature_num=1)
-    plt.hold(True)
+#    add_connection(embedding_ax, (3, embedding_dim), conv_axes[0] , (1.5, 0))
+#    add_connection(embedding_ax, (9, embedding_dim), conv_axes[1], (4.5, 0))
+#    add_connection(embedding_ax, (18, embedding_dim), conv_axes[2], (16.5, 0))
 
+    max_pool_ax = plt.subplot(gs[0, :])
+    note_boxes = [{"box": [5, 0, 1, 1], "color": "cyan", "alpha": 0.6},
+                  {"box": [16, 0, 1, 1], "color": "magenta", "alpha": 0.6},
+                  {"box": [35, 0, 1, 1], "color": "orange", "alpha": 0.6}]
+    add_tensor_2d(max_pool_ax, length=text_length*2, feature_num=1, notification_box=note_boxes)
+
+
+#    add_connection(conv_axes[0], (0, 8.5), max_pool_ax , (5.5, 0))
+#    add_connection(conv_axes[1], (0, 5.5), max_pool_ax, (16.5, 0))
+#    add_connection(conv_axes[2], (text_length, 2.5), max_pool_ax, (35.5, 0))
+
+
+    plt.gcf().tight_layout()
     plt.show()
 
     # fig_dir = './'
